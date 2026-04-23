@@ -1,0 +1,5439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Weather Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.4);
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --input-bg: rgba(15, 23, 42, 0.8);
+            --modal-bg: rgba(15, 23, 42, 0.95);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 40px 20px;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 600;
+        }
+
+        #date-range {
+            color: var(--text);
+            font-weight: 400;
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+
+        /* Controls Bar */
+        .controls-bar {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 40px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 250px;
+        }
+
+        .control-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--accent);
+            font-weight: 600;
+            padding-left: 5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        input, select {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 15px;
+            color: white;
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        select option {
+            background: var(--bg);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 28px;
+            padding: 25px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            border-color: var(--accent);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .symbol {
+            font-size: 4rem;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 0 15px rgba(56, 189, 248, 0.4));
+        }
+
+        .city-name {
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .condition {
+            color: var(--accent);
+            font-weight: 500;
+            margin-bottom: 20px;
+            text-transform: capitalize;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+        }
+
+        .card-date-range {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 100%;
+            gap: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .forecast-container {
+            width: 100%;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            padding-top: 18px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .forecast-day {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 60px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 12px;
+            transition: background 0.2s ease;
+        }
+
+        .forecast-day:hover {
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .forecast-weekday {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--accent);
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+            font-weight: 700;
+        }
+
+        .forecast-date {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .forecast-icon {
+            font-size: 1.4rem;
+            margin-bottom: 6px;
+        }
+
+        .forecast-temp {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .forecast-rain {
+            font-size: 0.65rem;
+            color: var(--accent);
+            opacity: 0.8;
+        }
+
+        .see-all-btn {
+            margin-top: 15px;
+            padding: 8px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            color: var(--accent);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .see-all-btn:hover {
+            background: var(--accent);
+            color: var(--bg);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        /* Modal Styles */
+        #detail-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #detail-modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: var(--modal-bg);
+            width: 90%;
+            max-width: 800px;
+            border-radius: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            position: relative;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: color 0.2s ease;
+        }
+
+        .close-btn:hover {
+            color: var(--accent);
+        }
+
+        .modal-header {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .modal-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .modal-subtitle {
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.8rem;
+        }
+
+        .hourly-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-start;
+            height: 280px;
+            padding-top: 50px;
+            padding-bottom: 60px;
+            margin-bottom: 40px;
+            gap: 15px;
+            overflow-x: auto;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hourly-bar {
+            flex: 0 0 50px;
+            background: linear-gradient(to top, var(--accent), #818cf8);
+            border-radius: 8px 8px 0 0;
+            position: relative;
+            transition: height 0.5s ease;
+        }
+
+        .hourly-bar:hover {
+            filter: brightness(1.2);
+        }
+
+        .hourly-val {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .hourly-time {
+            position: absolute;
+            bottom: -45px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-45deg);
+            font-size: 0.7rem;
+            white-space: nowrap;
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        #full-forecast-modal .modal-content {
+            max-width: 1000px;
+        }
+
+        .full-forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .full-day-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .full-day-card:hover {
+            background: rgba(56, 189, 248, 0.1);
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 80px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            padding-bottom: 40px;
+        }
+
+        /* Empty state */
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 100px;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            background: var(--card-bg);
+            border-radius: 28px;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .controls-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Weather Intelligence</h1>
+            <p id="date-range">Analytics across Ireland</p>
+        </header>
+
+        <div class="controls-bar">
+            <div class="control-group">
+                <label class="control-label" for="city-search">Select or Search City</label>
+                <div class="input-wrapper">
+                    <input type="text" id="city-search" placeholder="Type to filter cities..." list="city-list">
+                    <datalist id="city-list"></datalist>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="sort-by">Sort Results By</label>
+                <select id="sort-by">
+                    <option value="name-asc">City Name (A-Z)</option>
+                    <option value="name-desc">City Name (Z-A)</option>
+                    <option value="high-desc">Highest Temperature</option>
+                    <option value="low-asc">Lowest Temperature</option>
+                    <option value="rain-desc">Maximum Precipitation</option>
+                    <option value="wind-desc">Strongest Wind</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="weather-grid" class="grid"></div>
+
+        <div class="footer-note">
+            Computational Data • Met Éireann Open Access Service • Irish Meteorological Institute
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="detail-modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div class="modal-header">
+                <div id="modal-city" class="modal-title">City Name</div>
+                <div id="modal-date" class="modal-subtitle">Date details</div>
+            </div>
+            <div id="modal-body">
+                <div class="hourly-chart" id="hourly-chart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Forecast Modal -->
+    <div id="full-forecast-modal" class="modal-search" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px); z-index: 999; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease;">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeFullForecast()">&times;</span>
+            <div class="modal-header">
+                <div id="full-modal-city" class="modal-title">City Name</div>
+                <div id="full-modal-info" class="modal-subtitle">Full Period Forecast</div>
+            </div>
+            <div id="full-forecast-grid" class="full-forecast-grid"></div>
+        </div>
+    </div>
+
+    <script>window.weatherData = [
+    {
+        "City": "Athlone",
+        "Lat": 53.42,
+        "Lon": -7.94,
+        "High": 18.5,
+        "Low": 5.0,
+        "Rain": 0.0,
+        "WindSpeed": 3.2,
+        "WindDir": "E",
+        "Condition": "PartlyCloud",
+        "Dates": "Thu 23/04-Sun 03/05",
+        "Summary": "H/L:18.5/5.0  | R: 0.0mm | W:3.2 E  | PartlyCloud",
+        "Forecast": [
+            {
+                "Date": "2026-04-23",
+                "Day": "Thursday",
+                "High": 16.7,
+                "Low": 8.2,
+                "Rain": 0.0,
+                "WindSpeed": 4.0,
+                "WindDir": "E",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "15:00",
+                        "temp": 16.7
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 16.5
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 15.9
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 15.1
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 13.8
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 11.9
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.4
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 9.3
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 8.2
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-24",
+                "Day": "Friday",
+                "High": 17.9,
+                "Low": 5.0,
+                "Rain": 0.0,
+                "WindSpeed": 3.5,
+                "WindDir": "E",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 7.4
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 6.9
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 6.2
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 5.5
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 5.3
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 5.0
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 5.1
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 8.6
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 10.6
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 12.7
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 14.7
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 16.1
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 17.0
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 17.6
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 17.9
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 17.7
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 17.8
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 17.3
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 16.5
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 15.0
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 12.9
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 11.0
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 9.8
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 9.6
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-25",
+                "Day": "Saturday",
+                "High": 18.5,
+                "Low": 6.1,
+                "Rain": 0.0,
+                "WindSpeed": 2.1,
+                "WindDir": "E",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.7
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 9.4
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 8.7
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 8.2
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 7.8
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 6.7
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 6.1
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 8.8
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 11.9
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 13.9
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 15.8
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 17.2
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 18.5
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 16.5
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 16.9
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 17.2
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 17.3
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 16.9
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 15.9
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 15.0
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 13.1
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 12.2
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 11.4
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 10.6
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-26",
+                "Day": "Sunday",
+                "High": 15.2,
+                "Low": 8.0,
+                "Rain": 0.0,
+                "WindSpeed": 1.9,
+                "WindDir": "W",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.8
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 9.4
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 9.6
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 9.2
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 8.4
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 8.0
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 8.6
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 9.1
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 10.2
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 11.4
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 12.5
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 13.2
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 14.0
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 14.8
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 15.0
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 14.5
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 15.2
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 15.2
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 14.9
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 11.1
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-27",
+                "Day": "Monday",
+                "High": 15.0,
+                "Low": 9.5,
+                "Rain": 0.0,
+                "WindSpeed": 3.3,
+                "WindDir": "N",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.5
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 9.5
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 10.1
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 10.8
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 14.0
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 15.0
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 14.3
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.0
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-28",
+                "Day": "Tuesday",
+                "High": 15.3,
+                "Low": 7.0,
+                "Rain": 0.0,
+                "WindSpeed": 3.8,
+                "WindDir": "NE",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 8.4
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 7.3
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 7.0
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 11.3
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 14.3
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 15.3
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 14.0
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 9.7
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-29",
+                "Day": "Wednesday",
+                "High": 11.5,
+                "Low": 6.5,
+                "Rain": 0.0,
+                "WindSpeed": 4.0,
+                "WindDir": "NE",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 7.4
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 6.5
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 11.5
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 11.5
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-30",
+                "Day": "Thursday",
+                "High": 13.5,
+                "Low": 6.5,
+                "Rain": 0.0,
+                "WindSpeed": 5.7,
+                "WindDir": "E",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 7.4
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 6.5
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 13.5
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.2
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-01",
+                "Day": "Friday",
+                "High": 13.1,
+                "Low": 7.8,
+                "Rain": 0.0,
+                "WindSpeed": 6.2,
+                "WindDir": "SE",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 8.7
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 7.8
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 13.1
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 11.8
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-02",
+                "Day": "Saturday",
+                "High": 14.7,
+                "Low": 10.5,
+                "Rain": 0.0,
+                "WindSpeed": 4.2,
+                "WindDir": "S",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 11.0
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 10.5
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 14.7
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 14.5
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-03",
+                "Day": "Sunday",
+                "High": 8.6,
+                "Low": 8.6,
+                "Rain": 0.0,
+                "WindSpeed": 2.1,
+                "WindDir": "NW",
+                "Condition": "Mixed",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 8.6
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "City": "Bray",
+        "Lat": 53.2,
+        "Lon": -6.11,
+        "High": 16.6,
+        "Low": 7.2,
+        "Rain": 1.7,
+        "WindSpeed": 3.0,
+        "WindDir": "S",
+        "Condition": "PartlyCloud",
+        "Dates": "Thu 23/04-Sun 03/05",
+        "Summary": "H/L:16.6/7.2  | R: 1.7mm | W:3.0 S  | PartlyCloud",
+        "Forecast": [
+            {
+                "Date": "2026-04-23",
+                "Day": "Thursday",
+                "High": 12.5,
+                "Low": 9.8,
+                "Rain": 0.0,
+                "WindSpeed": 1.6,
+                "WindDir": "N",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "15:00",
+                        "temp": 12.4
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 12.3
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 12.5
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 12.5
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 11.9
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 11.0
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.1
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 9.8
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 10.0
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-24",
+                "Day": "Friday",
+                "High": 14.3,
+                "Low": 7.2,
+                "Rain": 0.0,
+                "WindSpeed": 1.9,
+                "WindDir": "SE",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.1
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 9.6
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 9.1
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 8.6
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 7.8
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 7.2
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 7.2
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 9.5
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 11.1
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 12.0
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 12.6
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 13.0
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 13.7
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 14.3
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 14.1
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 13.5
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 13.6
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 14.1
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 14.3
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 13.7
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 11.8
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.1
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 9.0
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 8.1
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-25",
+                "Day": "Saturday",
+                "High": 16.6,
+                "Low": 7.4,
+                "Rain": 0.0,
+                "WindSpeed": 2.7,
+                "WindDir": "SE",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 7.9
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 7.9
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 7.6
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 7.4
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 7.4
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 7.7
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 8.5
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 10.9
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 13.0
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 14.2
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 14.8
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 15.5
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 16.6
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 14.4
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 14.3
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 14.1
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 13.8
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 13.2
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 12.7
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 12.1
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 11.2
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.8
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 10.7
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 10.4
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-26",
+                "Day": "Sunday",
+                "High": 13.6,
+                "Low": 9.9,
+                "Rain": 0.0,
+                "WindSpeed": 2.4,
+                "WindDir": "S",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.0
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 10.5
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 10.1
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 10.0
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 9.9
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 10.2
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 10.4
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 11.5
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 12.1
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 12.3
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 12.3
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 12.6
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 12.9
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 13.1
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 13.3
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 13.5
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 13.6
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 13.4
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.2
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 11.9
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-27",
+                "Day": "Monday",
+                "High": 13.1,
+                "Low": 10.0,
+                "Rain": 0.0,
+                "WindSpeed": 3.4,
+                "WindDir": "NW",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 11.4
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 10.3
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 10.0
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 11.6
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 12.4
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 13.1
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 12.4
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.1
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-28",
+                "Day": "Tuesday",
+                "High": 11.3,
+                "Low": 9.0,
+                "Rain": 0.0,
+                "WindSpeed": 4.9,
+                "WindDir": "N",
+                "Condition": "LightCloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.8
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 9.0
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 9.6
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 10.8
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 10.9
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 11.3
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 10.8
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 9.8
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-29",
+                "Day": "Wednesday",
+                "High": 10.3,
+                "Low": 8.3,
+                "Rain": 0.0,
+                "WindSpeed": 4.9,
+                "WindDir": "NE",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.3
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 8.3
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 9.6
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 10.3
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-30",
+                "Day": "Thursday",
+                "High": 12.4,
+                "Low": 8.2,
+                "Rain": 0.0,
+                "WindSpeed": 5.4,
+                "WindDir": "NE",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.7
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 8.2
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 10.7
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 12.4
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-01",
+                "Day": "Friday",
+                "High": 11.9,
+                "Low": 9.7,
+                "Rain": 1.1,
+                "WindSpeed": 5.3,
+                "WindDir": "SE",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.5
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 9.7
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 11.7
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 11.9
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-02",
+                "Day": "Saturday",
+                "High": 13.3,
+                "Low": 10.7,
+                "Rain": 0.6,
+                "WindSpeed": 5.5,
+                "WindDir": "S",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.8
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 10.7
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 13.3
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.0
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-03",
+                "Day": "Sunday",
+                "High": 10.1,
+                "Low": 10.1,
+                "Rain": 0.0,
+                "WindSpeed": 1.6,
+                "WindDir": "NW",
+                "Condition": "Mixed",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.1
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "City": "Cork",
+        "Lat": 51.9,
+        "Lon": -8.48,
+        "High": 16.5,
+        "Low": 6.8,
+        "Rain": 9.9,
+        "WindSpeed": 3.7,
+        "WindDir": "E",
+        "Condition": "Cloud",
+        "Dates": "Thu 23/04-Sun 03/05",
+        "Summary": "H/L:16.5/6.8  | R: 9.9mm | W:3.7 E  | Cloud",
+        "Forecast": [
+            {
+                "Date": "2026-04-23",
+                "Day": "Thursday",
+                "High": 14.3,
+                "Low": 11.9,
+                "Rain": 0.0,
+                "WindSpeed": 5.9,
+                "WindDir": "E",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "15:00",
+                        "temp": 14.3
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 14.1
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 13.6
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.5
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 13.2
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 12.4
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 12.0
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 11.9
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 12.0
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-24",
+                "Day": "Friday",
+                "High": 14.8,
+                "Low": 9.9,
+                "Rain": 0.0,
+                "WindSpeed": 5.3,
+                "WindDir": "E",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 11.9
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 11.6
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 11.5
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 11.3
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 10.7
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 10.0
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 9.9
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 10.5
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 11.2
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 12.1
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 12.9
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 13.5
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 14.1
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 14.6
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 14.6
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 14.8
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 13.7
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 12.7
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 12.6
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 12.2
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 12.0
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 12.0
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 11.9
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 11.6
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-25",
+                "Day": "Saturday",
+                "High": 16.1,
+                "Low": 8.6,
+                "Rain": 0.0,
+                "WindSpeed": 2.2,
+                "WindDir": "E",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 11.1
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 10.6
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 10.4
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 9.3
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 8.6
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 8.6
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 9.3
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 10.4
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 11.7
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 13.5
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 14.6
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 14.5
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 14.4
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 15.7
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 16.1
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 16.0
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 15.4
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 14.3
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.6
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 12.6
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 10.7
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 9.8
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 9.1
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 8.9
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-26",
+                "Day": "Sunday",
+                "High": 16.2,
+                "Low": 8.2,
+                "Rain": 0.0,
+                "WindSpeed": 1.7,
+                "WindDir": "N",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 8.5
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 8.2
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 8.2
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 8.4
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 8.3
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 8.2
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 8.8
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 10.0
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 11.6
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 13.0
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 13.4
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 14.7
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 15.4
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 16.1
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 16.2
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 16.0
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 16.1
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 15.9
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 15.3
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 12.2
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-27",
+                "Day": "Monday",
+                "High": 16.5,
+                "Low": 8.6,
+                "Rain": 0.0,
+                "WindSpeed": 3.6,
+                "WindDir": "N",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.8
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 8.6
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 9.0
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 11.5
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 15.3
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 16.5
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 15.8
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 11.9
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-28",
+                "Day": "Tuesday",
+                "High": 16.0,
+                "Low": 8.1,
+                "Rain": 0.0,
+                "WindSpeed": 3.4,
+                "WindDir": "N",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.8
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 8.6
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 8.1
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 12.1
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 15.7
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 16.0
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 14.4
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.5
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-29",
+                "Day": "Wednesday",
+                "High": 13.6,
+                "Low": 7.0,
+                "Rain": 0.0,
+                "WindSpeed": 3.9,
+                "WindDir": "NE",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 8.2
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 7.0
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 12.1
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.6
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-30",
+                "Day": "Thursday",
+                "High": 13.1,
+                "Low": 6.8,
+                "Rain": 2.0,
+                "WindSpeed": 5.8,
+                "WindDir": "NE",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 8.5
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 6.8
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 12.9
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.1
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-01",
+                "Day": "Friday",
+                "High": 11.9,
+                "Low": 9.4,
+                "Rain": 5.7,
+                "WindSpeed": 6.4,
+                "WindDir": "E",
+                "Condition": "Drizzle",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.9
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 9.4
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 11.3
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 11.9
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-02",
+                "Day": "Saturday",
+                "High": 13.9,
+                "Low": 10.4,
+                "Rain": 2.2,
+                "WindSpeed": 3.2,
+                "WindDir": "SW",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.4
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 10.5
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 13.5
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.9
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-03",
+                "Day": "Sunday",
+                "High": 9.7,
+                "Low": 9.7,
+                "Rain": 0.0,
+                "WindSpeed": 2.3,
+                "WindDir": "N",
+                "Condition": "Mixed",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.7
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "City": "Dundalk",
+        "Lat": 54.0,
+        "Lon": -6.41,
+        "High": 16.2,
+        "Low": 4.6,
+        "Rain": 0.0,
+        "WindSpeed": 3.4,
+        "WindDir": "E",
+        "Condition": "PartlyCloud",
+        "Dates": "Thu 23/04-Sun 03/05",
+        "Summary": "H/L:16.2/4.6  | R: 0.0mm | W:3.4 E  | PartlyCloud",
+        "Forecast": [
+            {
+                "Date": "2026-04-23",
+                "Day": "Thursday",
+                "High": 13.1,
+                "Low": 11.5,
+                "Rain": 0.0,
+                "WindSpeed": 4.3,
+                "WindDir": "E",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "15:00",
+                        "temp": 12.8
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 12.9
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 13.0
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.1
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 12.4
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 11.5
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 11.5
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 12.0
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 12.2
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-24",
+                "Day": "Friday",
+                "High": 14.1,
+                "Low": 5.9,
+                "Rain": 0.0,
+                "WindSpeed": 3.6,
+                "WindDir": "E",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 11.8
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 11.2
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 10.5
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 10.0
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 9.3
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 8.8
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 9.1
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 10.5
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 11.6
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 13.0
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 13.8
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 13.6
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 13.7
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 13.7
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 13.8
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 14.1
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 13.9
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 13.9
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.2
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 12.4
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 11.1
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.2
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 8.4
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 5.9
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-25",
+                "Day": "Saturday",
+                "High": 16.2,
+                "Low": 4.6,
+                "Rain": 0.0,
+                "WindSpeed": 2.3,
+                "WindDir": "E",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 5.3
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 5.0
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 4.6
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 5.0
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 5.1
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 5.6
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 6.5
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 8.9
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 11.4
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 14.2
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 15.1
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 15.7
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 16.2
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 13.7
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 13.5
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 13.2
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 12.8
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 12.4
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 11.9
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 11.4
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 10.8
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.6
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 10.6
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 11.0
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-26",
+                "Day": "Sunday",
+                "High": 13.0,
+                "Low": 9.9,
+                "Rain": 0.0,
+                "WindSpeed": 2.4,
+                "WindDir": "E",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.4
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 10.6
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 10.6
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 10.3
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 10.0
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 9.9
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 10.1
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 10.7
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 11.1
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 11.6
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 12.0
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 12.1
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 12.1
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 12.8
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 13.0
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 12.9
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 12.3
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 11.6
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 11.4
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.5
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-27",
+                "Day": "Monday",
+                "High": 14.4,
+                "Low": 8.3,
+                "Rain": 0.0,
+                "WindSpeed": 3.5,
+                "WindDir": "NW",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.7
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 8.4
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 8.3
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 11.6
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 13.7
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 14.4
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.2
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.1
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-28",
+                "Day": "Tuesday",
+                "High": 12.7,
+                "Low": 8.4,
+                "Rain": 0.0,
+                "WindSpeed": 4.1,
+                "WindDir": "E",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 8.7
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 8.6
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 8.4
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 12.0
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 12.7
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 12.5
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 12.2
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.0
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-29",
+                "Day": "Wednesday",
+                "High": 11.4,
+                "Low": 8.3,
+                "Rain": 0.0,
+                "WindSpeed": 4.1,
+                "WindDir": "E",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.4
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 8.3
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 10.0
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 11.4
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-30",
+                "Day": "Thursday",
+                "High": 12.5,
+                "Low": 8.3,
+                "Rain": 0.0,
+                "WindSpeed": 6.6,
+                "WindDir": "E",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.5
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 8.3
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 11.5
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 12.5
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-01",
+                "Day": "Friday",
+                "High": 11.3,
+                "Low": 9.1,
+                "Rain": 0.0,
+                "WindSpeed": 6.5,
+                "WindDir": "E",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.1
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 9.1
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 11.3
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 11.2
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-02",
+                "Day": "Saturday",
+                "High": 13.0,
+                "Low": 10.7,
+                "Rain": 0.0,
+                "WindSpeed": 3.5,
+                "WindDir": "S",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.7
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 10.8
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 12.9
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.0
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-03",
+                "Day": "Sunday",
+                "High": 10.2,
+                "Low": 10.2,
+                "Rain": 0.0,
+                "WindSpeed": 1.9,
+                "WindDir": "NW",
+                "Condition": "Mixed",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.2
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "City": "Galway",
+        "Lat": 53.27,
+        "Lon": -9.06,
+        "High": 19.6,
+        "Low": 6.4,
+        "Rain": 5.3,
+        "WindSpeed": 3.7,
+        "WindDir": "E",
+        "Condition": "Cloud",
+        "Dates": "Thu 23/04-Sun 03/05",
+        "Summary": "H/L:19.6/6.4  | R: 5.3mm | W:3.7 E  | Cloud",
+        "Forecast": [
+            {
+                "Date": "2026-04-23",
+                "Day": "Thursday",
+                "High": 18.1,
+                "Low": 10.8,
+                "Rain": 0.0,
+                "WindSpeed": 4.4,
+                "WindDir": "E",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "15:00",
+                        "temp": 18.1
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 17.9
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 17.2
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 16.5
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 15.3
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 14.1
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 13.1
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 12.1
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 10.8
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-24",
+                "Day": "Friday",
+                "High": 19.6,
+                "Low": 8.2,
+                "Rain": 0.0,
+                "WindSpeed": 5.2,
+                "WindDir": "E",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.3
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 10.4
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 9.7
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 9.3
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 8.8
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 8.6
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 8.2
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 8.8
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 10.4
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 12.5
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 14.4
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 16.3
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 17.9
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 18.9
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 19.5
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 19.6
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 19.3
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 18.7
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 17.7
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 16.5
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 15.6
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 15.2
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 14.2
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 13.8
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-25",
+                "Day": "Saturday",
+                "High": 18.1,
+                "Low": 9.0,
+                "Rain": 0.0,
+                "WindSpeed": 2.4,
+                "WindDir": "W",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 13.8
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 12.9
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 12.2
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 11.3
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 9.9
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 9.7
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 9.7
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 10.9
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 12.1
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 14.0
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 15.7
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 16.9
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 18.1
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 13.7
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 13.8
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 13.9
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 14.3
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 14.1
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.3
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 12.1
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 10.7
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 9.8
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 9.2
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 9.0
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-26",
+                "Day": "Sunday",
+                "High": 14.2,
+                "Low": 8.1,
+                "Rain": 0.0,
+                "WindSpeed": 2.4,
+                "WindDir": "W",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.0
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 9.4
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 9.1
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 8.8
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 8.5
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 8.1
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 8.5
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 9.0
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 10.2
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 11.0
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 11.6
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 12.8
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 13.8
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 14.2
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 14.2
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 13.8
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 13.6
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 13.4
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 12.9
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.9
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-27",
+                "Day": "Monday",
+                "High": 15.7,
+                "Low": 9.5,
+                "Rain": 0.0,
+                "WindSpeed": 2.5,
+                "WindDir": "N",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.5
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 10.1
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 9.9
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 11.7
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 14.6
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 15.7
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 14.9
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.4
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-28",
+                "Day": "Tuesday",
+                "High": 16.0,
+                "Low": 7.0,
+                "Rain": 0.0,
+                "WindSpeed": 3.4,
+                "WindDir": "E",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 8.3
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 7.4
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 7.0
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 10.8
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 14.3
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 16.0
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 15.4
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 11.4
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-29",
+                "Day": "Wednesday",
+                "High": 13.7,
+                "Low": 6.5,
+                "Rain": 0.0,
+                "WindSpeed": 4.1,
+                "WindDir": "E",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 8.5
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 6.5
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 12.5
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.7
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-30",
+                "Day": "Thursday",
+                "High": 14.1,
+                "Low": 6.4,
+                "Rain": 0.0,
+                "WindSpeed": 5.6,
+                "WindDir": "E",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 7.3
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 6.4
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 14.1
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.9
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-01",
+                "Day": "Friday",
+                "High": 12.9,
+                "Low": 8.1,
+                "Rain": 4.8,
+                "WindSpeed": 6.1,
+                "WindDir": "SE",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.1
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 8.1
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 11.9
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 12.9
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-02",
+                "Day": "Saturday",
+                "High": 13.9,
+                "Low": 10.7,
+                "Rain": 0.5,
+                "WindSpeed": 5.1,
+                "WindDir": "S",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.8
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 10.7
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 13.9
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 12.9
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-03",
+                "Day": "Sunday",
+                "High": 8.4,
+                "Low": 8.4,
+                "Rain": 0.0,
+                "WindSpeed": 1.5,
+                "WindDir": "W",
+                "Condition": "Mixed",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 8.4
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "City": "Howth",
+        "Lat": 53.38,
+        "Lon": -6.06,
+        "High": 13.4,
+        "Low": 7.4,
+        "Rain": 0.0,
+        "WindSpeed": 4.0,
+        "WindDir": "SE",
+        "Condition": "Sun",
+        "Dates": "Thu 23/04-Sun 03/05",
+        "Summary": "H/L:13.4/7.4  | R: 0.0mm | W:4.0 SE | Sun",
+        "Forecast": [
+            {
+                "Date": "2026-04-23",
+                "Day": "Thursday",
+                "High": 11.6,
+                "Low": 10.1,
+                "Rain": 0.0,
+                "WindSpeed": 4.9,
+                "WindDir": "E",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "15:00",
+                        "temp": 11.6
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 11.4
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 11.1
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 10.9
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 10.7
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 10.1
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.1
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 10.5
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 10.6
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-24",
+                "Day": "Friday",
+                "High": 12.2,
+                "Low": 7.9,
+                "Rain": 0.0,
+                "WindSpeed": 3.1,
+                "WindDir": "SE",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.9
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 10.1
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 10.0
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 9.5
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 9.6
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 9.2
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 9.0
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 9.7
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 10.3
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 10.7
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 11.3
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 11.6
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 12.0
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 12.1
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 12.2
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 11.9
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 11.7
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 11.7
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 11.5
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 10.6
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 9.6
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 8.5
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 8.1
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 7.9
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-25",
+                "Day": "Saturday",
+                "High": 13.4,
+                "Low": 7.4,
+                "Rain": 0.0,
+                "WindSpeed": 3.2,
+                "WindDir": "SE",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 7.8
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 8.1
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 8.2
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 8.0
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 7.5
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 7.4
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 7.7
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 9.2
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 10.5
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 11.5
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 12.4
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 12.7
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 13.4
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 11.8
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 11.8
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 11.6
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 11.5
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 11.4
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 11.3
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 11.1
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 11.0
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.8
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 10.7
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 10.8
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-26",
+                "Day": "Sunday",
+                "High": 12.1,
+                "Low": 10.1,
+                "Rain": 0.0,
+                "WindSpeed": 3.1,
+                "WindDir": "SE",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.6
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 10.6
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 10.7
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 10.5
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 10.4
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 10.2
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 10.1
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 10.2
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 10.5
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 10.6
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 10.4
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 10.6
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 10.8
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 10.9
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 11.1
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 11.4
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 11.5
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 11.8
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 12.0
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 12.1
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-27",
+                "Day": "Monday",
+                "High": 11.8,
+                "Low": 9.7,
+                "Rain": 0.0,
+                "WindSpeed": 3.6,
+                "WindDir": "NW",
+                "Condition": "LightCloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 11.4
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 10.4
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 9.7
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 10.9
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 11.4
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 11.8
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 11.7
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.5
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-28",
+                "Day": "Tuesday",
+                "High": 10.7,
+                "Low": 9.9,
+                "Rain": 0.0,
+                "WindSpeed": 5.2,
+                "WindDir": "NE",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.6
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 9.9
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 10.1
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 10.3
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 10.3
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 10.6
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 10.7
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.6
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-29",
+                "Day": "Wednesday",
+                "High": 10.3,
+                "Low": 9.0,
+                "Rain": 0.0,
+                "WindSpeed": 6.2,
+                "WindDir": "NE",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.3
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 9.0
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 9.1
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 10.2
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-30",
+                "Day": "Thursday",
+                "High": 12.3,
+                "Low": 9.1,
+                "Rain": 0.0,
+                "WindSpeed": 8.4,
+                "WindDir": "E",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.8
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 9.1
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 9.8
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 12.3
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-01",
+                "Day": "Friday",
+                "High": 11.6,
+                "Low": 10.1,
+                "Rain": 0.0,
+                "WindSpeed": 6.2,
+                "WindDir": "SE",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 11.4
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 10.1
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 11.1
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 11.6
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-02",
+                "Day": "Saturday",
+                "High": 11.7,
+                "Low": 11.0,
+                "Rain": 0.0,
+                "WindSpeed": 6.6,
+                "WindDir": "S",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 11.2
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 11.0
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 11.4
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 11.7
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-03",
+                "Day": "Sunday",
+                "High": 11.6,
+                "Low": 11.6,
+                "Rain": 0.0,
+                "WindSpeed": 3.4,
+                "WindDir": "W",
+                "Condition": "Mixed",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 11.6
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "City": "Kilkenny",
+        "Lat": 52.65,
+        "Lon": -7.25,
+        "High": 18.5,
+        "Low": 6.4,
+        "Rain": 1.0,
+        "WindSpeed": 2.9,
+        "WindDir": "E",
+        "Condition": "Cloud",
+        "Dates": "Thu 23/04-Sun 03/05",
+        "Summary": "H/L:18.5/6.4  | R: 1.0mm | W:2.9 E  | Cloud",
+        "Forecast": [
+            {
+                "Date": "2026-04-23",
+                "Day": "Thursday",
+                "High": 16.4,
+                "Low": 9.4,
+                "Rain": 0.0,
+                "WindSpeed": 4.1,
+                "WindDir": "E",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "15:00",
+                        "temp": 16.4
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 16.0
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 15.6
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 15.1
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 13.9
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 12.0
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 11.1
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 10.2
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 9.4
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-24",
+                "Day": "Friday",
+                "High": 17.8,
+                "Low": 6.7,
+                "Rain": 0.0,
+                "WindSpeed": 3.7,
+                "WindDir": "E",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 8.9
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 8.8
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 8.0
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 7.2
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 6.7
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 6.9
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 7.5
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 9.4
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 11.0
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 13.1
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 14.9
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 16.2
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 17.1
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 17.6
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 17.8
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 17.7
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 17.3
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 16.8
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 15.8
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 14.4
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 12.1
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.2
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 8.9
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 8.1
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-25",
+                "Day": "Saturday",
+                "High": 18.5,
+                "Low": 6.4,
+                "Rain": 0.0,
+                "WindSpeed": 1.7,
+                "WindDir": "SE",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 8.1
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 8.5
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 8.7
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 8.8
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 8.4
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 6.6
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 6.4
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 8.7
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 12.4
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 14.4
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 16.3
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 17.6
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 18.5
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 15.0
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 15.2
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 15.9
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 16.3
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 16.3
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 15.9
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 14.9
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 13.6
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 12.9
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 12.2
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 11.2
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-26",
+                "Day": "Sunday",
+                "High": 16.5,
+                "Low": 9.0,
+                "Rain": 0.0,
+                "WindSpeed": 0.9,
+                "WindDir": "S",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.1
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 9.6
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 9.4
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 9.2
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 9.1
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 9.0
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 9.4
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 10.5
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 12.0
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 13.2
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 13.9
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 14.6
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 15.2
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 15.5
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 16.1
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 16.4
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 16.5
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 16.3
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 15.5
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 12.2
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-27",
+                "Day": "Monday",
+                "High": 15.7,
+                "Low": 7.8,
+                "Rain": 0.0,
+                "WindSpeed": 3.0,
+                "WindDir": "N",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.6
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 7.8
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 7.8
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 11.5
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 14.0
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 15.7
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 14.5
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.4
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-28",
+                "Day": "Tuesday",
+                "High": 15.4,
+                "Low": 7.2,
+                "Rain": 0.0,
+                "WindSpeed": 4.3,
+                "WindDir": "NE",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.5
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 7.6
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 7.2
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 12.4
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 15.1
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 15.4
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.1
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 9.0
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-29",
+                "Day": "Wednesday",
+                "High": 12.3,
+                "Low": 6.4,
+                "Rain": 0.0,
+                "WindSpeed": 4.2,
+                "WindDir": "NE",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 7.3
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 6.4
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 12.2
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 12.3
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-30",
+                "Day": "Thursday",
+                "High": 14.0,
+                "Low": 6.4,
+                "Rain": 0.0,
+                "WindSpeed": 5.9,
+                "WindDir": "NE",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 7.9
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 6.4
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 13.4
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 14.0
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-01",
+                "Day": "Friday",
+                "High": 11.0,
+                "Low": 8.9,
+                "Rain": 1.0,
+                "WindSpeed": 5.5,
+                "WindDir": "SE",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.4
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 8.9
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 10.8
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 11.0
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-02",
+                "Day": "Saturday",
+                "High": 14.7,
+                "Low": 10.6,
+                "Rain": 0.0,
+                "WindSpeed": 3.8,
+                "WindDir": "S",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.9
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 10.6
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 14.7
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 12.8
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-03",
+                "Day": "Sunday",
+                "High": 8.5,
+                "Low": 8.5,
+                "Rain": 0.0,
+                "WindSpeed": 0.4,
+                "WindDir": "W",
+                "Condition": "Mixed",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 8.5
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "City": "Naas",
+        "Lat": 53.21,
+        "Lon": -6.66,
+        "High": 18.0,
+        "Low": 5.7,
+        "Rain": 3.1,
+        "WindSpeed": 3.0,
+        "WindDir": "SE",
+        "Condition": "PartlyCloud",
+        "Dates": "Thu 23/04-Sun 03/05",
+        "Summary": "H/L:18.0/5.7  | R: 3.1mm | W:3.0 SE | PartlyCloud",
+        "Forecast": [
+            {
+                "Date": "2026-04-23",
+                "Day": "Thursday",
+                "High": 14.8,
+                "Low": 6.8,
+                "Rain": 0.0,
+                "WindSpeed": 2.9,
+                "WindDir": "NE",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "15:00",
+                        "temp": 14.8
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 14.5
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 14.5
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 14.0
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 12.5
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 9.9
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 8.1
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 7.3
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 6.8
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-24",
+                "Day": "Friday",
+                "High": 16.7,
+                "Low": 5.7,
+                "Rain": 0.0,
+                "WindSpeed": 3.3,
+                "WindDir": "SE",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 6.6
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 6.5
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 6.3
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 5.7
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 6.7
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 7.8
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 8.3
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 10.0
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 11.8
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 13.9
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 15.1
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 15.9
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 16.2
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 16.6
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 16.7
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 16.5
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 16.1
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 15.5
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 14.4
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 12.5
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 9.6
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 7.8
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 7.2
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 6.9
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-25",
+                "Day": "Saturday",
+                "High": 18.0,
+                "Low": 6.2,
+                "Rain": 0.0,
+                "WindSpeed": 2.4,
+                "WindDir": "SE",
+                "Condition": "PartlyCloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 7.6
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 8.0
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 7.7
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 6.6
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 6.2
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 7.1
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 7.7
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 10.1
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 13.4
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 15.6
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 16.5
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 17.4
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 18.0
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 17.7
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 17.5
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 17.1
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 16.7
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 16.2
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 15.7
+                    },
+                    {
+                        "time": "19:00",
+                        "temp": 14.0
+                    },
+                    {
+                        "time": "20:00",
+                        "temp": 12.9
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 12.0
+                    },
+                    {
+                        "time": "22:00",
+                        "temp": 11.7
+                    },
+                    {
+                        "time": "23:00",
+                        "temp": 10.1
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-26",
+                "Day": "Sunday",
+                "High": 15.7,
+                "Low": 9.0,
+                "Rain": 0.0,
+                "WindSpeed": 1.7,
+                "WindDir": "SW",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.5
+                    },
+                    {
+                        "time": "01:00",
+                        "temp": 10.3
+                    },
+                    {
+                        "time": "02:00",
+                        "temp": 10.2
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 10.3
+                    },
+                    {
+                        "time": "04:00",
+                        "temp": 9.0
+                    },
+                    {
+                        "time": "05:00",
+                        "temp": 9.4
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 9.7
+                    },
+                    {
+                        "time": "07:00",
+                        "temp": 11.4
+                    },
+                    {
+                        "time": "08:00",
+                        "temp": 12.8
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 13.8
+                    },
+                    {
+                        "time": "10:00",
+                        "temp": 14.8
+                    },
+                    {
+                        "time": "11:00",
+                        "temp": 15.5
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 15.7
+                    },
+                    {
+                        "time": "13:00",
+                        "temp": 15.4
+                    },
+                    {
+                        "time": "14:00",
+                        "temp": 15.2
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 15.3
+                    },
+                    {
+                        "time": "16:00",
+                        "temp": 15.4
+                    },
+                    {
+                        "time": "17:00",
+                        "temp": 15.0
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 14.6
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 11.1
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-27",
+                "Day": "Monday",
+                "High": 14.1,
+                "Low": 7.4,
+                "Rain": 0.0,
+                "WindSpeed": 2.5,
+                "WindDir": "N",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.5
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 7.4
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 8.1
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 10.4
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 12.6
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 14.1
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.6
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 10.7
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-28",
+                "Day": "Tuesday",
+                "High": 13.0,
+                "Low": 6.1,
+                "Rain": 0.0,
+                "WindSpeed": 4.5,
+                "WindDir": "NE",
+                "Condition": "LightCloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 8.1
+                    },
+                    {
+                        "time": "03:00",
+                        "temp": 6.1
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 7.2
+                    },
+                    {
+                        "time": "09:00",
+                        "temp": 11.5
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 13.0
+                    },
+                    {
+                        "time": "15:00",
+                        "temp": 12.7
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 11.3
+                    },
+                    {
+                        "time": "21:00",
+                        "temp": 8.3
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-29",
+                "Day": "Wednesday",
+                "High": 10.9,
+                "Low": 6.9,
+                "Rain": 0.0,
+                "WindSpeed": 4.5,
+                "WindDir": "NE",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 7.5
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 6.9
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 10.9
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 10.0
+                    }
+                ]
+            },
+            {
+                "Date": "2026-04-30",
+                "Day": "Thursday",
+                "High": 13.0,
+                "Low": 6.4,
+                "Rain": 0.0,
+                "WindSpeed": 5.6,
+                "WindDir": "E",
+                "Condition": "Sun",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 8.1
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 6.4
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 12.3
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 13.0
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-01",
+                "Day": "Friday",
+                "High": 12.2,
+                "Low": 8.2,
+                "Rain": 3.1,
+                "WindSpeed": 5.3,
+                "WindDir": "SE",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 8.9
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 8.2
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 12.2
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 11.3
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-02",
+                "Day": "Saturday",
+                "High": 14.0,
+                "Low": 9.9,
+                "Rain": 0.0,
+                "WindSpeed": 4.5,
+                "WindDir": "SW",
+                "Condition": "Cloud",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 10.3
+                    },
+                    {
+                        "time": "06:00",
+                        "temp": 9.9
+                    },
+                    {
+                        "time": "12:00",
+                        "temp": 13.9
+                    },
+                    {
+                        "time": "18:00",
+                        "temp": 14.0
+                    }
+                ]
+            },
+            {
+                "Date": "2026-05-03",
+                "Day": "Sunday",
+                "High": 9.1,
+                "Low": 9.1,
+                "Rain": 0.0,
+                "WindSpeed": 1.0,
+                "WindDir": "S",
+                "Condition": "Mixed",
+                "Hourly": [
+                    {
+                        "time": "00:00",
+                        "temp": 9.1
+                    }
+                ]
+            }
+        ]
+    }
+];</script>
+    <script>
+        const SYMBOL_MAP = {
+            'Sun': '☀️', 'Cloud': '☁️', 'PartlyCloud': '⛅', 'LightCloud': '🌤️',
+            'Rain': '🌧️', 'LightRain': '🌦️', 'Showers': '🌦️', 'HeavyRain': '⛈️',
+            'Snow': '❄️', 'Sleet': '🌨️', 'Fog': '🌫️', 'Mist': '🌫️',
+            'Thunder': '⚡', 'Mixed': '🌈'
+        };
+
+        let masterData = [];
+
+        function getEmoji(condition) {
+            if (!condition) return '🌡️';
+            for (const key in SYMBOL_MAP) {
+                if (condition.includes(key)) return SYMBOL_MAP[key];
+            }
+            return '🌡️';
+        }
+
+        function formatShortDate(dateStr) {
+            const parts = dateStr.split('-');
+            return `${parts[2]}/${parts[1]}`;
+        }
+
+        function showDayDetails(cityIndex, dayIndex) {
+            const city = masterData[cityIndex];
+            const day = city.Forecast[dayIndex];
+            
+            document.getElementById('modal-city').innerText = city.City;
+            document.getElementById('modal-date').innerText = `${day.Day}, ${day.Date}`;
+            
+            const chart = document.getElementById('hourly-chart');
+            chart.innerHTML = '';
+            
+            if (!day.Hourly || day.Hourly.length === 0) {
+                chart.innerHTML = '<p style="width:100%; text-align:center">No hourly data available for this day.</p>';
+            } else {
+                // Find min/max for scaling
+                const temps = day.Hourly.map(h => h.temp);
+                const min = Math.min(...temps) - 1;
+                const max = Math.max(...temps) + 1;
+                const range = max - min;
+                
+                day.Hourly.forEach(hour => {
+                    const barHeight = ((hour.temp - min) / range) * 100;
+                    const bar = document.createElement('div');
+                    bar.className = 'hourly-bar';
+                    bar.style.height = `${Math.max(barHeight, 5)}%`;
+                    
+                    // Conditional color based on temperature
+                    if (hour.temp > 10) {
+                        bar.style.background = 'linear-gradient(to top, #facc15, #fef08a)'; // Yellow
+                        bar.style.boxShadow = '0 0 10px rgba(250, 204, 21, 0.4)';
+                    }
+
+                    bar.innerHTML = `
+                        <span class="hourly-val">${hour.temp}°</span>
+                        <span class="hourly-time">${hour.time}</span>
+                    `;
+                    chart.appendChild(bar);
+                });
+            }
+            
+            document.getElementById('detail-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('detail-modal').classList.remove('active');
+        }
+
+        function showFullForecast(cityIndex) {
+            const city = masterData[cityIndex];
+            document.getElementById('full-modal-city').innerText = city.City;
+            document.getElementById('full-modal-info').innerText = city.Dates;
+            
+            const grid = document.getElementById('full-forecast-grid');
+            grid.innerHTML = '';
+            
+            city.Forecast.forEach((day, dayIdx) => {
+                const dayCard = document.createElement('div');
+                dayCard.className = 'full-day-card';
+                dayCard.onclick = () => {
+                    closeFullForecast();
+                    showDayDetails(cityIndex, dayIdx);
+                };
+                dayCard.innerHTML = `
+                    <span class="forecast-weekday">${day.Day.substring(0,3)}</span>
+                    <span class="forecast-date">${formatShortDate(day.Date)}</span>
+                    <span class="forecast-icon">${getEmoji(day.Condition)}</span>
+                    <span class="forecast-temp">${day.High}° / ${day.Low}°</span>
+                `;
+                grid.appendChild(dayCard);
+            });
+            
+            const modal = document.getElementById('full-forecast-modal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.style.opacity = '1', 10);
+        }
+
+        function closeFullForecast() {
+            const modal = document.getElementById('full-forecast-modal');
+            modal.style.opacity = '0';
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+
+        function renderGrid(data) {
+            const grid = document.getElementById('weather-grid');
+            grid.innerHTML = '';
+
+            if (data.length === 0) {
+                grid.innerHTML = '<div class="no-results">No cities match your current filter</div>';
+                return;
+            }
+
+            data.forEach(city => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                let forecastHtml = '';
+                if (city.Forecast && city.Forecast.length > 0) {
+                    forecastHtml = '<div class="forecast-container">';
+                    // Limit to 3 days in the card
+                    city.Forecast.slice(0, 3).forEach((day, dayIdx) => { 
+                        forecastHtml += `
+                            <div class="forecast-day" onclick="showDayDetails(${masterData.indexOf(city)}, ${dayIdx})">
+                                <span class="forecast-weekday">${day.Day.substring(0,3)}</span>
+                                <span class="forecast-date">${formatShortDate(day.Date)}</span>
+                                <span class="forecast-icon" title="${day.Condition}">${getEmoji(day.Condition)}</span>
+                                <span class="forecast-temp">${day.High}° / ${day.Low}°</span>
+                                <span class="forecast-rain">${day.Rain}mm</span>
+                            </div>
+                        `;
+                    });
+                    forecastHtml += '</div>';
+                    
+                    if (city.Forecast.length > 3) {
+                        forecastHtml += `<button class="see-all-btn" onclick="showFullForecast(${masterData.indexOf(city)})">See All Days</button>`;
+                    }
+                }
+
+                card.innerHTML = `
+                    <div class="symbol">${getEmoji(city.Condition)}</div>
+                    <div class="city-name">${city.City}</div>
+                    <div class="condition">${city.Condition}</div>
+                    <div class="card-date-range">${city.Dates}</div>
+                    ${forecastHtml}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function handleControls() {
+            const searchTerm = document.getElementById('city-search').value.toLowerCase();
+            const sortBy = document.getElementById('sort-by').value;
+
+            let filtered = masterData.filter(city => 
+                city.City.toLowerCase().includes(searchTerm)
+            );
+
+            filtered.sort((a, b) => {
+                switch(sortBy) {
+                    case 'name-asc': return a.City.localeCompare(b.City);
+                    case 'name-desc': return b.City.localeCompare(a.City);
+                    case 'high-desc': return b.High - a.High;
+                    case 'low-asc': return a.Low - b.Low;
+                    case 'rain-desc': return b.Rain - a.Rain;
+                    case 'wind-desc': return b.WindSpeed - a.WindSpeed;
+                    default: return 0;
+                }
+            });
+
+            renderGrid(filtered);
+        }
+
+        function init() {
+            if (!window.weatherData || window.weatherData.length === 0) {
+                document.getElementById('weather-grid').innerHTML = '<div class="no-results">Weather data not loaded yet</div>';
+                return;
+            }
+
+            masterData = window.weatherData;
+            
+            // Populate datalist
+            const datalist = document.getElementById('city-list');
+            masterData.forEach(city => {
+                const opt = document.createElement('option');
+                opt.value = city.City;
+                datalist.appendChild(opt);
+            });
+
+            document.getElementById('date-range').innerHTML = `Forecast Data for: <strong>${masterData[0].Dates}</strong>`;
+            
+            // Initial render
+            handleControls();
+
+            // Event Listeners
+            document.getElementById('city-search').addEventListener('input', handleControls);
+            document.getElementById('sort-by').addEventListener('change', handleControls);
+            
+            // Close modals on outside click
+            window.onclick = function(event) {
+                const detailModal = document.getElementById('detail-modal');
+                const fullModal = document.getElementById('full-forecast-modal');
+                if (event.target == detailModal) closeModal();
+                if (event.target == fullModal) closeFullForecast();
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
